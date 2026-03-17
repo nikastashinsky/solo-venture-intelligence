@@ -970,11 +970,31 @@ function ApiKeySetup({ onDone }) {
             onKeyDown={e => e.key === "Enter" && key.trim() && saveAndContinue()}
             style={{ width: "100%", background: T.panel, border: `1px solid ${foc ? T.accent : T.border}`, borderRadius: 4, padding: "11px 14px", color: T.text, fontSize: 13, fontFamily: T.mono, outline: "none", transition: "border-color 0.15s", boxSizing: "border-box" }}
           />
+          <div style={{ fontSize: 10, color: T.muted, marginTop: 6 }}>
+            Get a free key at <span style={{ color: T.accent, fontFamily: T.mono }}>console.anthropic.com</span> → API Keys
+          </div>
         </div>
 
-        <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.7, marginBottom: 28, padding: "12px 14px", background: T.panel, borderRadius: 4, border: `1px solid ${T.border}` }}>
-          Get a free key at <span style={{ color: T.accent, fontFamily: T.mono }}>console.anthropic.com</span> → API Keys.<br />
-          Your key never leaves your browser — it's stored locally and sent directly to Anthropic.
+        {/* Privacy & Security breakdown */}
+        <div style={{ marginBottom: 24, borderRadius: 6, border: `1px solid ${T.border}`, overflow: "hidden" }}>
+          <div style={{ padding: "10px 14px", background: T.panel2, borderBottom: `1px solid ${T.border}` }}>
+            <span style={{ fontSize: 9, letterSpacing: 2, color: T.green, textTransform: "uppercase", fontFamily: T.mono }}>Privacy & Security</span>
+          </div>
+          {[
+            [T.green, "Your key never leaves your browser", "It's stored in localStorage on your device only. This tool has no backend server — nothing is ever transmitted to us."],
+            [T.green, "Calls go directly to Anthropic", "When you run research, your browser talks directly to api.anthropic.com. Your data and key are not routed through any third party."],
+            [T.green, "Your profile stays on your device", "Everything you enter — your background, financials, goals — is stored locally and never sent anywhere except directly to Anthropic to generate your report."],
+            [T.amber, "Set a spend limit on your key", "We recommend setting a monthly spending cap at console.anthropic.com → Billing. Each full report costs roughly $0.15–0.20."],
+            [T.amber, "Don't share your key", "Treat it like a password. Anyone with your key can make API calls billed to your account."],
+          ].map(([color, title, desc], i) => (
+            <div key={i} style={{ display: "flex", gap: 12, padding: "11px 14px", borderBottom: i < 4 ? `1px solid ${T.border}` : "none", background: T.panel }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0, marginTop: 5 }} />
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: T.text, marginBottom: 2 }}>{title}</div>
+                <div style={{ fontSize: 10, color: T.muted, lineHeight: 1.6 }}>{desc}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
         <button
