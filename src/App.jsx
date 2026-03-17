@@ -940,6 +940,7 @@ function ResearchEngine({ profile, onBack, restoredResults }) {
 function ApiKeySetup({ onDone }) {
   const [key, setKey] = useState("");
   const [foc, setFoc] = useState(false);
+  const [showClaudeGuide, setShowClaudeGuide] = useState(false);
 
   const saveAndContinue = () => {
     if (key.trim()) setApiKey(key.trim());
@@ -985,9 +986,65 @@ function ApiKeySetup({ onDone }) {
         </button>
 
         <div style={{ textAlign: "center" }}>
-          <button onClick={onDone} style={{ background: "none", border: "none", color: T.muted, fontSize: 11, fontFamily: T.font, cursor: "pointer", textDecoration: "underline" }}>
-            Using this inside Claude.ai? Skip this step.
+          <button onClick={() => setShowClaudeGuide(true)} style={{ background: "none", border: "none", color: T.muted, fontSize: 11, fontFamily: T.font, cursor: "pointer", textDecoration: "underline" }}>
+            Want to use this inside Claude.ai instead?
           </button>
+        </div>
+
+        {showClaudeGuide && (
+          <ClaudeGuide onBack={() => setShowClaudeGuide(false)} onSkip={onDone} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ClaudeGuide({ onBack, onSkip }) {
+  const [status, setStatus] = useState("idle"); // idle | loading | copied | error
+  const RAW_URL = "https://raw.githubusercontent.com/nikastashinsky/solo-venture-intelligence/main/src/App.jsx";
+
+  const copyCode = async () => {
+    setStatus("loading");
+    try {
+      const res = await fetch(RAW_URL);
+      if (!res.ok) throw new Error();
+      const code = await res.text();
+      await navigator.clipboard.writeText(code);
+      setStatus("copied");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  const btnColor = status === "copied" ? T.green : status === "error" ? T.red : T.accent;
+  const btnLabel = status === "loading" ? "Fetching code…" : status === "copied" ? "✓ Copied to clipboard!" : status === "error" ? "Failed — try again" : "Copy code to clipboard";
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: T.bg + "ee", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ maxWidth: 480, width: "100%", background: T.panel, border: `1px solid ${T.border}`, borderRadius: 8, padding: 28 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Run inside Claude.ai</div>
+        <p style={{ fontSize: 12, color: T.muted, lineHeight: 1.7, marginBottom: 24 }}>No API key needed — Claude handles everything. Just paste the code into any conversation.</p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 28 }}>
+          {[
+            ["1", "Copy the code", <button key="copy" onClick={copyCode} disabled={status === "loading"} style={{ background: btnColor, border: "none", color: status === "copied" ? "#000" : "#fff", padding: "10px 18px", fontSize: 11, fontFamily: T.font, cursor: "pointer", borderRadius: 4, fontWeight: 700, whiteSpace: "nowrap", transition: "background 0.2s" }}>{btnLabel}</button>],
+            ["2", "Open Claude.ai and start a new conversation", <a key="open" href="https://claude.ai" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: T.accent, fontFamily: T.mono }}>claude.ai →</a>],
+            ["3", "Paste the code into the message box and send", <span key="paste" style={{ fontSize: 11, color: T.muted, fontFamily: T.mono }}>Cmd+V / Ctrl+V</span>],
+            ["4", "Claude renders it as an interactive app — click Run Deep Research", null],
+          ].map(([num, label, action]) => (
+            <div key={num} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", background: T.accentDim, border: `1px solid ${T.accent}44`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ fontSize: 11, color: T.accent, fontWeight: 700, fontFamily: T.mono }}>{num}</span>
+              </div>
+              <div style={{ flex: 1, fontSize: 12, color: T.text, lineHeight: 1.5 }}>{label}</div>
+              {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onBack} style={{ flex: 1, background: "none", border: `1px solid ${T.border}`, color: T.muted, padding: "10px", fontSize: 11, fontFamily: T.font, cursor: "pointer", borderRadius: 4 }}>← Back</button>
+          <button onClick={onSkip} style={{ flex: 1, background: T.accentDim, border: `1px solid ${T.accent}44`, color: T.accent, padding: "10px", fontSize: 11, fontFamily: T.font, cursor: "pointer", borderRadius: 4, fontWeight: 600 }}>I'm already in Claude →</button>
         </div>
       </div>
     </div>
