@@ -939,7 +939,6 @@ function ResearchEngine({ profile, onBack, restoredResults }) {
 // ─── API KEY SETUP SCREEN ─────────────────────────────────────────────────────
 function ApiKeySetup({ onDone }) {
   const [key, setKey] = useState("");
-  const [mode, setMode] = useState(""); // "artifact" | "github"
   const [foc, setFoc] = useState(false);
 
   const saveAndContinue = () => {
@@ -949,55 +948,47 @@ function ApiKeySetup({ onDone }) {
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ maxWidth: 500, width: "100%" }}>
-        <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 4, color: T.accent, textTransform: "uppercase", marginBottom: 16 }}>Solo Venture Intelligence</div>
-        <h1 style={{ fontFamily: T.serif, fontSize: "clamp(22px,4vw,36px)", lineHeight: 1.2, fontWeight: 700, marginBottom: 10 }}>
-          Where are you<br /><em style={{ color: T.accent }}>running this?</em>
+      <div style={{ maxWidth: 460, width: "100%" }}>
+        <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 4, color: T.accent, textTransform: "uppercase", marginBottom: 20 }}>Solo Venture Intelligence</div>
+        <h1 style={{ fontFamily: T.serif, fontSize: "clamp(24px,4vw,36px)", lineHeight: 1.2, fontWeight: 700, marginBottom: 12 }}>
+          One thing before<br /><em style={{ color: T.accent }}>we start.</em>
         </h1>
-        <p style={{ fontSize: 12, color: T.muted, lineHeight: 1.8, marginBottom: 28 }}>
-          This tool makes AI-powered research calls. How it authenticates depends on where you're using it.
+        <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.8, marginBottom: 32 }}>
+          This tool uses Claude AI to run deep research on your profile. To power it, you need a free Anthropic API key.
         </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
-          {[
-            ["artifact", "Claude.ai / Artifact", "You opened this inside Claude — no API key needed. Auth is handled automatically."],
-            ["github", "GitHub Pages / Standalone", "You're on a hosted website. You'll need a free Anthropic API key to make research calls."],
-          ].map(([val, title, desc]) => (
-            <div key={val} onClick={() => setMode(val)} style={{ padding: "14px 16px", borderRadius: 6, cursor: "pointer", border: `1px solid ${mode === val ? T.accent : T.border}`, background: mode === val ? T.accentDim : T.panel, transition: "all 0.15s" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                <div style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${mode === val ? T.accent : T.muted}`, background: mode === val ? T.accent : "transparent", flexShrink: 0, transition: "all 0.15s" }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: mode === val ? T.text : T.muted }}>{title}</span>
-              </div>
-              <p style={{ fontSize: 11, color: T.muted, lineHeight: 1.6, margin: "0 0 0 24px" }}>{desc}</p>
-            </div>
-          ))}
+        <div style={{ marginBottom: 10 }}>
+          <Lbl>Your Anthropic API Key</Lbl>
+          <input
+            type="password"
+            value={key}
+            placeholder="sk-ant-..."
+            onChange={e => setKey(e.target.value)}
+            onFocus={() => setFoc(true)}
+            onBlur={() => setFoc(false)}
+            onKeyDown={e => e.key === "Enter" && key.trim() && saveAndContinue()}
+            style={{ width: "100%", background: T.panel, border: `1px solid ${foc ? T.accent : T.border}`, borderRadius: 4, padding: "11px 14px", color: T.text, fontSize: 13, fontFamily: T.mono, outline: "none", transition: "border-color 0.15s", boxSizing: "border-box" }}
+          />
         </div>
 
-        {mode === "github" && (
-          <div style={{ marginBottom: 24, animation: "fadeUp 0.2s ease" }}>
-            <div style={{ fontSize: 10, color: T.muted, marginBottom: 12, lineHeight: 1.6 }}>
-              Get a free API key at <span style={{ color: T.accent, fontFamily: T.mono }}>console.anthropic.com</span> → API Keys. Your key is stored only in your browser and sent directly to Anthropic — never to any server.
-            </div>
-            <div style={{ fontSize: 9, letterSpacing: 3, color: T.muted, textTransform: "uppercase", marginBottom: 5, fontFamily: T.font }}>Anthropic API Key</div>
-            <input
-              type="password"
-              value={key}
-              placeholder="sk-ant-..."
-              onChange={e => setKey(e.target.value)}
-              onFocus={() => setFoc(true)}
-              onBlur={() => setFoc(false)}
-              style={{ width: "100%", background: T.panel, border: `1px solid ${foc ? T.accent : T.border}`, borderRadius: 4, padding: "10px 12px", color: T.text, fontSize: 13, fontFamily: T.mono, outline: "none", transition: "border-color 0.15s", boxSizing: "border-box" }}
-            />
-          </div>
-        )}
+        <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.7, marginBottom: 28, padding: "12px 14px", background: T.panel, borderRadius: 4, border: `1px solid ${T.border}` }}>
+          Get a free key at <span style={{ color: T.accent, fontFamily: T.mono }}>console.anthropic.com</span> → API Keys.<br />
+          Your key never leaves your browser — it's stored locally and sent directly to Anthropic.
+        </div>
 
         <button
           onClick={saveAndContinue}
-          disabled={!mode || (mode === "github" && !key.trim())}
-          style={{ width: "100%", background: mode && !(mode === "github" && !key.trim()) ? T.accent : T.faint, border: "none", color: mode && !(mode === "github" && !key.trim()) ? "#fff" : T.muted, padding: "12px", fontSize: 12, fontFamily: T.font, cursor: mode ? "pointer" : "not-allowed", borderRadius: 4, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", transition: "background 0.15s" }}
+          disabled={!key.trim()}
+          style={{ width: "100%", background: key.trim() ? T.accent : T.faint, border: "none", color: key.trim() ? "#fff" : T.muted, padding: "13px", fontSize: 12, fontFamily: T.font, cursor: key.trim() ? "pointer" : "not-allowed", borderRadius: 4, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", transition: "background 0.15s", marginBottom: 16 }}
         >
-          Continue →
+          Get Started →
         </button>
+
+        <div style={{ textAlign: "center" }}>
+          <button onClick={onDone} style={{ background: "none", border: "none", color: T.muted, fontSize: 11, fontFamily: T.font, cursor: "pointer", textDecoration: "underline" }}>
+            Using this inside Claude.ai? Skip this step.
+          </button>
+        </div>
       </div>
     </div>
   );
