@@ -226,7 +226,7 @@ function generateReport(profile, results) {
 <div class="cover">
   <div style="font-size:9px;letter-spacing:5px;color:#6471f5;text-transform:uppercase;margin-bottom:14px">Solo Venture Intelligence · Confidential</div>
   <h1>Business Opportunity<br/>Report for <em>${name}</em></h1>
-  <div>${[profile.currentRole, profile.location, profile.yearsExperience ? profile.yearsExperience + "yr exp" : ""].filter(Boolean).map(t => `<span class="cover-tag">${t}</span>`).join("")}</div>
+  <div>${[profile.currentRole, profile.location, ...(Array.isArray(profile.industries) ? profile.industries.slice(0,2) : [])].filter(Boolean).map(t => `<span class="cover-tag">${t}</span>`).join("")}</div>
   <div class="cover-meta">Generated ${date} &nbsp;·&nbsp; ${profile.location || "—"} &nbsp;·&nbsp; Target: ${profile.targetIncome ? "$" + profile.targetIncome : "—"}/yr</div>
 </div>
 <div class="content">
@@ -271,90 +271,112 @@ function generateReport(profile, results) {
 
 // ─── PROFILE DEFAULTS ─────────────────────────────────────────────────────────
 const BLANK = {
-  name: "", location: "", age: "",
+  name: "", location: "",
   employmentStatus: "employed", monthlyRunway: "", dependents: "none",
-  currentRole: "", yearsExperience: "", industries: "", skills: "",
-  technicalLevel: "moderate", prevBizAttempts: "none",
-  executionTrack: "", proofOfWork: "",
-  networkQuality: "", socialFollowing: "none",
-  marketingBudget: "", capitalAvailable: "",
-  languages: "", energyType: "ambi",
-  unfairAdvantages: "", interestedSectors: "", mustAvoid: "",
-  highestCharged: "", workStyle: "",
+  currentRole: "",
+  industries: [], skills: [],
+  technicalLevel: "moderate", energyType: "ambi",
+  capitalAvailable: "",
   riskTolerance: "medium", timeCommitment: "fulltime",
   targetIncome: "", timelineToRevenue: "6months",
+  interestedSectors: [], mustAvoid: [], unfairAdvantages: [],
 };
 
 // ─── RESEARCH QUESTIONS ───────────────────────────────────────────────────────
-function buildQuestions(p) {
-  const ctx = `FOUNDER PROFILE (early 2026):
-Name: ${p.name || "Founder"} | Location: ${p.location} | Age: ${p.age}
+const RESEARCH_SYS = `You are a senior partner at a top-tier strategy firm. Deep expertise across all industries — consumer, healthcare, finance, real estate, media, education, professional services, manufacturing, technology. Brutally honest, hyper-specific, never generic. Plain prose or numbered lists. No bullet symbols, asterisks, or markdown headers. Early 2026.`;
+
+function buildCtx(p) {
+  const industries = Array.isArray(p.industries) ? p.industries.join(", ") : (p.industries || "");
+  const skills = Array.isArray(p.skills) ? p.skills.join(", ") : (p.skills || "");
+  const sectors = Array.isArray(p.interestedSectors) ? p.interestedSectors.join(", ") : (p.interestedSectors || "");
+  const avoid = Array.isArray(p.mustAvoid) ? p.mustAvoid.join(", ") : (p.mustAvoid || "");
+  const advantages = Array.isArray(p.unfairAdvantages) ? p.unfairAdvantages.join(", ") : (p.unfairAdvantages || "");
+  return `FOUNDER PROFILE (early 2026):
+Name: ${p.name || "Founder"} | Location: ${p.location}
 Employment: ${p.employmentStatus} | Monthly Runway: ${p.monthlyRunway || "unknown"} months | Dependents: ${p.dependents}
-Role: ${p.currentRole} | Experience: ${p.yearsExperience} years
-Industries: ${p.industries} | Skills: ${p.skills}
-Technical level: ${p.technicalLevel} | Previous business attempts: ${p.prevBizAttempts}
-Execution track record: ${p.executionTrack || "not specified"}
-Proof of work: ${p.proofOfWork || "not specified"}
-Network: ${p.networkQuality || "not specified"}
-Social following: ${p.socialFollowing} | Marketing budget: ${p.marketingBudget || 0}/mo | Capital: ${p.capitalAvailable || 0}
-Languages: ${p.languages || "English only"} | Energy type: ${p.energyType}
-Unfair advantages: ${p.unfairAdvantages || "not specified"}
-Highest ever charged: ${p.highestCharged || "not specified"}
-Sectors of interest: ${p.interestedSectors || "open"} | Must avoid: ${p.mustAvoid || "nothing"}
-Work style: ${p.workStyle || "flexible"} | Risk tolerance: ${p.riskTolerance}
-Time commitment: ${p.timeCommitment} | Target income: ${p.targetIncome}/yr | Timeline: ${p.timelineToRevenue}`;
+Role: ${p.currentRole}
+Industries: ${industries || "not specified"} | Skills: ${skills || "not specified"}
+Technical level: ${p.technicalLevel} | Energy type: ${p.energyType}
+Capital available: $${p.capitalAvailable || 0} | Risk tolerance: ${p.riskTolerance}
+Time commitment: ${p.timeCommitment} | Target income: $${p.targetIncome || "not specified"}/yr | Timeline: ${p.timelineToRevenue}
+Sectors of interest: ${sectors || "open"} | Must avoid: ${avoid || "nothing"}
+Unfair advantages: ${advantages || "not specified"}`;
+}
 
-  const SYS = `You are a senior partner at a top-tier strategy firm. Deep expertise across all industries — consumer, healthcare, finance, real estate, media, education, professional services, manufacturing, technology. Brutally honest, hyper-specific, never generic. Plain prose or numbered lists. No bullet symbols, asterisks, or markdown headers. Early 2026.`;
-
+// Phase 0: profile + market + 3 opportunity titles (11 calls)
+// These run first. After they complete, actual titles are injected into Phase 1-3 prompts.
+function buildPhase0(p) {
+  const ctx = buildCtx(p);
+  const industries = Array.isArray(p.industries) ? p.industries.join(", ") : (p.industries || "");
   return [
-    { key: "readiness", label: "Assessing solo business readiness", prompt: `${ctx}\n\nHonest readiness assessment for going solo. Consider runway (${p.monthlyRunway || "unknown"} months), employment status (${p.employmentStatus}), dependents (${p.dependents}), execution track record. Ready now or not? 3-4 sentences. No flattery.` },
+    { key: "readiness", label: "Assessing solo business readiness", prompt: `${ctx}\n\nHonest readiness assessment for going solo. Consider runway (${p.monthlyRunway || "unknown"} months), employment status (${p.employmentStatus}), dependents (${p.dependents}). Ready now or not? 3-4 sentences. No flattery.` },
     { key: "strengths", label: "Mapping genuine strengths", prompt: `${ctx}\n\n3 most defensible strengths for building a solo business — specific to their actual background, not generic. Number 1-3. One concrete sentence each.` },
-    { key: "blindspots", label: "Identifying blind spots", prompt: `${ctx}\n\n3 most likely blind spots or self-deceptions about starting a business. Consider pricing history (${p.highestCharged || "unknown"}), energy type (${p.energyType}), previous attempts (${p.prevBizAttempts}). Specific and honest. Number 1-3.` },
-    { key: "networkgap", label: "Analyzing network & distribution gaps", prompt: `${ctx}\n\nBiggest distribution and network gaps. Following: ${p.socialFollowing}, network: "${p.networkQuality || "unspecified"}". What specific relationships are missing? 3-4 sentences.` },
-    { key: "macro", label: "Scanning macro economic signals", prompt: `${ctx}\n\n4 macro signals most relevant to this person's background in ${p.industries} launching in ${p.location} in early 2026. Format each line: SIGNAL | tailwind or headwind | what this means for this person specifically. One per line. No other text.` },
+    { key: "blindspots", label: "Identifying blind spots", prompt: `${ctx}\n\n3 most likely blind spots or self-deceptions about starting a business. Consider energy type (${p.energyType}), risk tolerance (${p.riskTolerance}). Specific and honest. Number 1-3.` },
+    { key: "networkgap", label: "Analyzing network & distribution gaps", prompt: `${ctx}\n\nBiggest distribution and network gaps given their role and industry background. What specific relationships are missing to get first clients? 3-4 sentences.` },
+    { key: "macro", label: "Scanning macro economic signals", prompt: `${ctx}\n\n4 macro signals most relevant to this person's background in ${industries || "their field"} launching in ${p.location} in early 2026. Format each line: SIGNAL | tailwind or headwind | what this means for this person specifically. One per line. No other text.` },
     { key: "sectors", label: "Identifying high-opportunity sectors", prompt: `${ctx}\n\n5 highest-opportunity sectors for a solo in ${p.location} in early 2026. Beyond technology. Weight demographic shifts, regulatory changes, underserved markets. Number 1-5. Format: SECTOR NAME: why hot + how it fits this person.` },
-    { key: "timing", label: "Assessing personal market timing", prompt: `${ctx}\n\nBlunt 3-sentence verdict: given runway (${p.monthlyRunway || "unknown"} months), capital (${p.capitalAvailable || 0}), dependents (${p.dependents}), risk tolerance (${p.riskTolerance}) — is now the right time? If not, when and what needs to change?` },
-    { key: "hidden", label: "Surfacing non-obvious market gaps", prompt: `${ctx}\n\n4 hidden market gaps this person can fill that they probably haven't thought of. Based on background in ${p.industries}, location ${p.location}, languages (${p.languages || "English"}), energy type (${p.energyType}). Surprising. Number 1-4. Format: GAP: why underserved + why this person.` },
-    { key: "o1_title", label: "Identifying best-fit opportunity", prompt: `${ctx}\n\nSingle best solo business opportunity for this person. Highest probability of success. Do NOT default to AI consulting unless genuinely best fit. Consider all industries. Just the title in 4-8 words. Nothing else.` },
-    { key: "o1_concept", label: "Defining Opportunity 1", prompt: `${ctx}\n\nBest-fit solo opportunity: what it is, exact customer, revenue model, why this person specifically. Account for energy type (${p.energyType}), highest price charged (${p.highestCharged || "unknown"}), proof of work (${p.proofOfWork || "none"}). 3-4 sentences.` },
-    { key: "o1_market", label: "Sizing Opportunity 1", prompt: `${ctx}\n\nBest-fit opportunity: realistic market for a solo in ${p.location}. What do customers pay? 2-3 real analogues. 3-4 sentences.` },
-    { key: "o1_revenue", label: "Modeling Opportunity 1 revenue", prompt: `${ctx}\n\nConservative revenue for best-fit opportunity. One line exactly: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
-    { key: "o1_risks", label: "Stress-testing Opportunity 1", prompt: `${ctx}\n\nBest-fit opportunity: 3 most likely failure modes given this founder's profile. One sentence on wild success condition. Number 1-3.` },
-    { key: "o1_validate", label: "Building Opportunity 1 validation checklist", prompt: `${ctx}\n\nBest-fit opportunity: 5 specific things to do in the next 7 days to test if it's real. Name who to talk to, what to ask, positive signal. Number 1-5.` },
-    { key: "o2_title", label: "Identifying alternative opportunity", prompt: `${ctx}\n\nSecond solo business opportunity — genuinely different industry or model. Just the title in 4-8 words.` },
-    { key: "o2_concept", label: "Defining Opportunity 2", prompt: `${ctx}\n\nSecond opportunity: what it is, exact customer, model, why this person. 3-4 sentences.` },
-    { key: "o2_market", label: "Sizing Opportunity 2", prompt: `${ctx}\n\nSecond opportunity: market in ${p.location}. Customer pricing, 2-3 analogues. 3-4 sentences.` },
-    { key: "o2_revenue", label: "Modeling Opportunity 2 revenue", prompt: `${ctx}\n\nRevenue for second opportunity. One line: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
-    { key: "o2_risks", label: "Stress-testing Opportunity 2", prompt: `${ctx}\n\n3 failure modes for second opportunity. Wild-success condition. Number 1-3.` },
-    { key: "o2_validate", label: "Building Opportunity 2 validation checklist", prompt: `${ctx}\n\nSecond opportunity: 5 specific 7-day validation actions. Number 1-5.` },
-    { key: "o3_title", label: "Identifying high-upside opportunity", prompt: `${ctx}\n\nThird, highest-upside opportunity — ambitious, unconventional, high risk/reward. Just the title in 4-8 words.` },
-    { key: "o3_concept", label: "Defining Opportunity 3", prompt: `${ctx}\n\nHigh-upside opportunity: ambitious, unconventional, large ceiling. What, exact customer, model, why this person. 3-4 sentences.` },
-    { key: "o3_market", label: "Sizing Opportunity 3", prompt: `${ctx}\n\nHigh-upside opportunity: market in ${p.location}. Pricing, 2-3 analogues. 3-4 sentences.` },
-    { key: "o3_revenue", label: "Modeling Opportunity 3 revenue", prompt: `${ctx}\n\nRevenue for high-upside opportunity. One line: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
-    { key: "o3_risks", label: "Stress-testing Opportunity 3", prompt: `${ctx}\n\n3 failure modes for high-upside opportunity. Wild-success condition. Number 1-3.` },
-    { key: "o3_validate", label: "Building Opportunity 3 validation checklist", prompt: `${ctx}\n\nHigh-upside opportunity: 5 specific 7-day validation actions. Number 1-5.` },
-    { key: "compare", label: "Comparing all three opportunities", prompt: `${ctx}\n\nCompare all 3 opportunities. One line per dimension: DIMENSION: Opp1 vs Opp2 vs Opp3. Dimensions: REVENUE CEILING, TIME TO FIRST CLIENT, CAPITAL REQUIRED, FITS ENERGY TYPE, NETWORK LEVERAGE, SKILL FIT, BIGGEST RISK, BEST FOR PROFILE TYPE` },
-    { key: "p1_pitch", label: "Writing Playbook 1: positioning", prompt: `${ctx}\n\nBest-fit opportunity: 2-sentence positioning statement for when asked "what do you do?" Specific to their background. No jargon.` },
-    { key: "p1_launch", label: "Writing Playbook 1: launch plan", prompt: `${ctx}\n\nBest-fit opportunity with ${p.capitalAvailable || 0} capital and ${p.socialFollowing} following: WEEK 1-2: [3 specific actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
-    { key: "p1_clients", label: "Writing Playbook 1: client acquisition", prompt: `${ctx}\n\nBest-fit opportunity: 3 client acquisition strategies. Name real platforms/communities. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
-    { key: "p1_pricing", label: "Writing Playbook 1: pricing", prompt: `${ctx}\n\nBest-fit pricing. ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
-    { key: "p1_leverage", label: "Writing Playbook 1: leverage & mistakes", prompt: `${ctx}\n\nBest-fit: LEAD MAGNET: [specific asset] | AI LEVERAGE: [how AI tools accelerate] | SCALE PATH: [beyond solo] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
-    { key: "p2_pitch", label: "Writing Playbook 2: positioning", prompt: `${ctx}\n\nSecond opportunity: 2-sentence positioning statement. Specific, no jargon.` },
-    { key: "p2_launch", label: "Writing Playbook 2: launch plan", prompt: `${ctx}\n\nSecond opportunity: WEEK 1-2: [3 actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
-    { key: "p2_clients", label: "Writing Playbook 2: client acquisition", prompt: `${ctx}\n\nSecond opportunity: 3 acquisition strategies. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
-    { key: "p2_pricing", label: "Writing Playbook 2: pricing", prompt: `${ctx}\n\nSecond opportunity: ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
-    { key: "p2_leverage", label: "Writing Playbook 2: leverage & mistakes", prompt: `${ctx}\n\nSecond opportunity: LEAD MAGNET: [specific] | AI LEVERAGE: [how AI helps] | SCALE PATH: [growth] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
-    { key: "p3_pitch", label: "Writing Playbook 3: positioning", prompt: `${ctx}\n\nHigh-upside opportunity: 2-sentence positioning statement.` },
-    { key: "p3_launch", label: "Writing Playbook 3: launch plan", prompt: `${ctx}\n\nHigh-upside: WEEK 1-2: [3 actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
-    { key: "p3_clients", label: "Writing Playbook 3: client acquisition", prompt: `${ctx}\n\nHigh-upside: CHANNEL NAME (effort: low/medium/high): [exact steps] x3` },
-    { key: "p3_pricing", label: "Writing Playbook 3: pricing", prompt: `${ctx}\n\nHigh-upside: ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
-    { key: "p3_leverage", label: "Writing Playbook 3: leverage & mistakes", prompt: `${ctx}\n\nHigh-upside: LEAD MAGNET: [specific] | AI LEVERAGE: [accelerates how] | SCALE PATH: [growth] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
-    { key: "recommendation", label: "Synthesizing final recommendation", prompt: `${ctx}\n\nWhich ONE opportunity should this founder pursue first? Definitive. Weight runway, capital, dependents, energy type, risk tolerance. 3-4 sentences. No hedging.` },
-    { key: "yearone", label: "Mapping Year 1 quarter by quarter", prompt: `${ctx}\n\nRecommended opportunity Year 1: Q1: [priority + measurable outcome] | Q2: [priority + outcome] | Q3: [priority + outcome] | Q4: [priority + outcome]` },
-    { key: "redflags", label: "Flagging likely failure modes", prompt: `${ctx}\n\n3 things this founder is most likely to get wrong going solo. Not generic — specific to their profile. Number 1-3.` },
-    { key: "pricingpsych", label: "Diagnosing pricing psychology", prompt: `${ctx}\n\nHighest charge: ${p.highestCharged || "unknown"}. Target income: ${p.targetIncome || 0}/yr. Diagnose the pricing psychology gap and specific mindset shift required. 3-4 sentences.` },
+    { key: "timing", label: "Assessing personal market timing", prompt: `${ctx}\n\nBlunt 3-sentence verdict: given runway (${p.monthlyRunway || "unknown"} months), capital ($${p.capitalAvailable || 0}), dependents (${p.dependents}), risk tolerance (${p.riskTolerance}) — is now the right time? If not, when and what needs to change?` },
+    { key: "hidden", label: "Surfacing non-obvious market gaps", prompt: `${ctx}\n\n4 hidden market gaps this person can fill that they probably haven't thought of. Based on background in ${industries || "their field"}, location ${p.location}, energy type (${p.energyType}). Surprising. Number 1-4. Format: GAP: why underserved + why this person.` },
+    { key: "o1_title", label: "Identifying best-fit opportunity", prompt: `${ctx}\n\nSingle best solo business opportunity for this person. Highest probability of success given their specific background. Do NOT default to AI consulting unless genuinely best fit. Consider ALL industries. Respond with only the opportunity title in 4-8 words. Nothing else.` },
+    { key: "o2_title", label: "Identifying alternative opportunity", prompt: `${ctx}\n\nSecond solo business opportunity — genuinely different industry or model from the obvious first choice. Respond with only the opportunity title in 4-8 words. Nothing else.` },
+    { key: "o3_title", label: "Identifying high-upside opportunity", prompt: `${ctx}\n\nThird opportunity — highest-upside, ambitious, unconventional, high risk/reward. Must be distinct from the first two options. Respond with only the opportunity title in 4-8 words. Nothing else.` },
   ];
 }
+
+// Phase 1-3: all detail prompts — built AFTER phase 0 so actual titles can be injected (35 calls)
+function buildPhase1to3(p, titles) {
+  const ctx = buildCtx(p);
+  const o1 = titles.o1 || "Best-Fit Opportunity";
+  const o2 = titles.o2 || "Alternative Opportunity";
+  const o3 = titles.o3 || "High-Upside Opportunity";
+  return [
+    // ── Opportunity 1 ──
+    { key: "o1_concept", label: "Defining Opportunity 1", prompt: `${ctx}\n\nFor the solo business opportunity titled "${o1}": describe exactly what it is, the specific target customer, the revenue model, and why this person in particular. Account for their energy type (${p.energyType}). 3-4 sentences.` },
+    { key: "o1_market", label: "Sizing Opportunity 1", prompt: `${ctx}\n\nFor "${o1}": describe the realistic market for a solo in ${p.location}. What do customers pay? Cite 2-3 real-world analogues or comparables. 3-4 sentences.` },
+    { key: "o1_revenue", label: "Modeling Opportunity 1 revenue", prompt: `${ctx}\n\nConservative revenue projections for "${o1}". One line exactly: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
+    { key: "o1_risks", label: "Stress-testing Opportunity 1", prompt: `${ctx}\n\nFor "${o1}": the 3 most likely failure modes specific to this founder's profile. Number 1-3. Add one sentence on the wild success condition.` },
+    { key: "o1_validate", label: "Building Opportunity 1 validation checklist", prompt: `${ctx}\n\nFor "${o1}": 5 specific actions to take in the next 7 days to test if this opportunity is real. Name who to contact, what to say, what a positive signal looks like. Number 1-5.` },
+    // ── Opportunity 2 ──
+    { key: "o2_concept", label: "Defining Opportunity 2", prompt: `${ctx}\n\nFor the solo business opportunity titled "${o2}": describe exactly what it is, the specific target customer, the revenue model, and why this person. 3-4 sentences.` },
+    { key: "o2_market", label: "Sizing Opportunity 2", prompt: `${ctx}\n\nFor "${o2}": realistic market in ${p.location}. Customer pricing, 2-3 real analogues. 3-4 sentences.` },
+    { key: "o2_revenue", label: "Modeling Opportunity 2 revenue", prompt: `${ctx}\n\nRevenue for "${o2}". One line: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
+    { key: "o2_risks", label: "Stress-testing Opportunity 2", prompt: `${ctx}\n\nFor "${o2}": 3 most likely failure modes for this founder. Number 1-3. One sentence on wild success condition.` },
+    { key: "o2_validate", label: "Building Opportunity 2 validation checklist", prompt: `${ctx}\n\nFor "${o2}": 5 specific 7-day validation actions. Number 1-5.` },
+    // ── Opportunity 3 ──
+    { key: "o3_concept", label: "Defining Opportunity 3", prompt: `${ctx}\n\nFor the ambitious solo opportunity titled "${o3}": describe what it is, specific customer, revenue model, and why this person could pull it off. 3-4 sentences.` },
+    { key: "o3_market", label: "Sizing Opportunity 3", prompt: `${ctx}\n\nFor "${o3}": market in ${p.location}. Pricing, 2-3 real analogues. 3-4 sentences.` },
+    { key: "o3_revenue", label: "Modeling Opportunity 3 revenue", prompt: `${ctx}\n\nRevenue for "${o3}". One line: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
+    { key: "o3_risks", label: "Stress-testing Opportunity 3", prompt: `${ctx}\n\nFor "${o3}": 3 most likely failure modes. Number 1-3. One sentence on wild success condition.` },
+    { key: "o3_validate", label: "Building Opportunity 3 validation checklist", prompt: `${ctx}\n\nFor "${o3}": 5 specific 7-day validation actions. Number 1-5.` },
+    // ── Compare ──
+    { key: "compare", label: "Comparing all three opportunities", prompt: `${ctx}\n\nCompare "${o1}" vs "${o2}" vs "${o3}". One line per dimension: DIMENSION: Opp1 vs Opp2 vs Opp3. Dimensions: REVENUE CEILING, TIME TO FIRST CLIENT, CAPITAL REQUIRED, FITS ENERGY TYPE, NETWORK LEVERAGE, SKILL FIT, BIGGEST RISK, BEST FOR PROFILE TYPE` },
+    // ── Playbook 1 ──
+    { key: "p1_pitch", label: "Writing Playbook 1: positioning", prompt: `${ctx}\n\nFor "${o1}": write a 2-sentence positioning statement for when asked "what do you do?" Specific to their background. No jargon.` },
+    { key: "p1_launch", label: "Writing Playbook 1: launch plan", prompt: `${ctx}\n\nFor "${o1}" with $${p.capitalAvailable || 0} capital: WEEK 1-2: [3 specific actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
+    { key: "p1_clients", label: "Writing Playbook 1: client acquisition", prompt: `${ctx}\n\nFor "${o1}": 3 client acquisition strategies. Name real platforms/communities. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
+    { key: "p1_pricing", label: "Writing Playbook 1: pricing", prompt: `${ctx}\n\nPricing tiers for "${o1}". ENTRY: [price — what's included] | CORE: [price — what's included] | PREMIUM: [price — what's included] | RATIONALE: [one sentence]` },
+    { key: "p1_leverage", label: "Writing Playbook 1: leverage & mistakes", prompt: `${ctx}\n\nFor "${o1}": LEAD MAGNET: [specific asset] | AI LEVERAGE: [how AI tools accelerate this business] | SCALE PATH: [path beyond solo] | FATAL MISTAKES: 1. [specific to profile] 2. [mistake] 3. [mistake]` },
+    // ── Playbook 2 ──
+    { key: "p2_pitch", label: "Writing Playbook 2: positioning", prompt: `${ctx}\n\nFor "${o2}": 2-sentence positioning statement. Specific, no jargon.` },
+    { key: "p2_launch", label: "Writing Playbook 2: launch plan", prompt: `${ctx}\n\nFor "${o2}": WEEK 1-2: [3 actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
+    { key: "p2_clients", label: "Writing Playbook 2: client acquisition", prompt: `${ctx}\n\nFor "${o2}": 3 acquisition strategies. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
+    { key: "p2_pricing", label: "Writing Playbook 2: pricing", prompt: `${ctx}\n\nPricing for "${o2}". ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
+    { key: "p2_leverage", label: "Writing Playbook 2: leverage & mistakes", prompt: `${ctx}\n\nFor "${o2}": LEAD MAGNET: [specific] | AI LEVERAGE: [how AI helps] | SCALE PATH: [growth path] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
+    // ── Playbook 3 ──
+    { key: "p3_pitch", label: "Writing Playbook 3: positioning", prompt: `${ctx}\n\nFor "${o3}": 2-sentence positioning statement. Specific, no jargon.` },
+    { key: "p3_launch", label: "Writing Playbook 3: launch plan", prompt: `${ctx}\n\nFor "${o3}": WEEK 1-2: [3 actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
+    { key: "p3_clients", label: "Writing Playbook 3: client acquisition", prompt: `${ctx}\n\nFor "${o3}": 3 acquisition strategies. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
+    { key: "p3_pricing", label: "Writing Playbook 3: pricing", prompt: `${ctx}\n\nPricing for "${o3}". ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
+    { key: "p3_leverage", label: "Writing Playbook 3: leverage & mistakes", prompt: `${ctx}\n\nFor "${o3}": LEAD MAGNET: [specific] | AI LEVERAGE: [how AI accelerates] | SCALE PATH: [growth path] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
+    // ── Synthesis ──
+    { key: "recommendation", label: "Synthesizing final recommendation", prompt: `${ctx}\n\nBetween "${o1}", "${o2}", and "${o3}" — which ONE should this founder pursue first? Be definitive. Weight runway, capital, dependents, energy type, risk tolerance. 3-4 sentences. No hedging.` },
+    { key: "yearone", label: "Mapping Year 1 quarter by quarter", prompt: `${ctx}\n\nFor the recommended opportunity: Q1: [priority + measurable outcome] | Q2: [priority + outcome] | Q3: [priority + outcome] | Q4: [priority + outcome]` },
+    { key: "redflags", label: "Flagging likely failure modes", prompt: `${ctx}\n\n3 things this founder is most likely to get wrong going solo. Not generic — specific to this person's profile. Number 1-3.` },
+    { key: "pricingpsych", label: "Diagnosing pricing psychology", prompt: `${ctx}\n\nTarget income: $${p.targetIncome || 0}/yr. Risk tolerance: ${p.riskTolerance}. Diagnose this founder's likely pricing psychology gap and the specific mindset shift required. 3-4 sentences.` },
+  ];
+}
+
+const TOTAL_CALLS = 46; // 11 (phase 0) + 35 (phases 1-3)
 
 // ─── DESIGN COMPONENTS ────────────────────────────────────────────────────────
 const globalCSS = `
@@ -464,6 +486,60 @@ function FS({ label, hint, field, options, value, onChange }) {
   );
 }
 
+// ─── CHIP GRID ────────────────────────────────────────────────────────────────
+const INDUSTRY_OPTIONS = ["Financial Services","Healthcare","Real Estate","Education","Technology","Media & Content","Retail & E-commerce","Professional Services","Manufacturing","Non-profit","Government","Construction","Hospitality","Legal","Marketing & Advertising","Sports & Recreation","Logistics & Supply Chain","Energy & Utilities"];
+const SKILL_OPTIONS = ["Project Management","Sales","Writing & Copywriting","Product Strategy","Data Analysis","Design (UX/UI)","Software Development","Marketing","Financial Modeling","Operations","Legal & Compliance","Coaching & Training","Research","Public Speaking","Video Production","Customer Success","Community Building","Recruiting & HR"];
+const SECTOR_OPTIONS = ["Healthcare & Wellness","Education & Learning","Sustainability & Climate","Real Estate","Finance & Wealth","Legal Services","Food & Agriculture","Creative & Media","Travel & Hospitality","Non-profit & Social Impact","Sports & Recreation","Logistics & Supply Chain"];
+const AVOID_OPTIONS = ["Cold calling / outbound","Physical products","Must stay remote","Frequent travel","Managing employees","Long sales cycles","Fundraising / investors","Highly regulated industries","On-call / 24/7 support","High upfront capital","B2C consumer market"];
+const ADVANTAGE_OPTIONS = ["Industry insider knowledge","Unique cultural / language access","Existing client relationships","Proprietary data or IP","Niche certification or credential","Published thought leadership","Prior exit / business success","Rare technical skill","Deep domain expertise","Government or institutional access","Strong social media presence"];
+
+function ChipGrid({ label, hint, field, options, value = [], onChange }) {
+  const [custom, setCustom] = useState("");
+  const toggle = (opt) => {
+    const next = value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt];
+    onChange(field, next);
+  };
+  const addCustom = () => {
+    const t = custom.trim();
+    if (t && !value.includes(t)) onChange(field, [...value, t]);
+    setCustom("");
+  };
+  const customVals = value.filter(v => !options.includes(v));
+  return (
+    <div>
+      <Lbl>{label}</Lbl>
+      {hint && <div style={{ fontSize: 10, color: T.muted, marginBottom: 6, lineHeight: 1.4 }}>{hint}</div>}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: customVals.length ? 8 : 4 }}>
+        {options.map(opt => {
+          const sel = value.includes(opt);
+          return (
+            <button key={opt} onClick={() => toggle(opt)} style={{
+              padding: "6px 12px", borderRadius: 4, fontSize: 11, fontFamily: T.font, cursor: "pointer",
+              border: `1px solid ${sel ? T.accent : T.border}`,
+              background: sel ? T.accentDim : "transparent",
+              color: sel ? T.accent : T.muted, transition: "all 0.15s",
+            }}>{opt}</button>
+          );
+        })}
+      </div>
+      {customVals.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+          {customVals.map(v => (
+            <span key={v} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 4, background: T.accentDim, border: `1px solid ${T.accent}44`, fontSize: 11, color: T.accent }}>
+              {v}
+              <button onClick={() => onChange(field, value.filter(x => x !== v))} style={{ background: "none", border: "none", color: T.accent, cursor: "pointer", padding: 0, fontSize: 14, lineHeight: 1, marginTop: -1 }}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 7 }}>
+        <input value={custom} onChange={e => setCustom(e.target.value)} onKeyDown={e => e.key === "Enter" && custom.trim() && addCustom()} placeholder="Add your own…" style={{ ...iStyle, flex: 1, fontSize: 11, padding: "7px 10px" }} />
+        <button onClick={addCustom} disabled={!custom.trim()} style={{ padding: "7px 12px", borderRadius: 4, fontSize: 11, fontFamily: T.font, cursor: custom.trim() ? "pointer" : "not-allowed", border: `1px solid ${T.border}`, background: "transparent", color: T.muted, whiteSpace: "nowrap" }}>+ Add</button>
+      </div>
+    </div>
+  );
+}
+
 // ─── INTAKE FORM ──────────────────────────────────────────────────────────────
 function IntakeForm({ onSubmit }) {
   const [p, setP] = useState(BLANK);
@@ -478,16 +554,15 @@ function IntakeForm({ onSubmit }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <FI label="First Name" field="name" value={p.name} onChange={set} placeholder="e.g. Alex" />
-            <FI label="Age" field="age" value={p.age} onChange={set} placeholder="e.g. 34" type="number" />
+            <FI label="City / Region" field="location" value={p.location} onChange={set} placeholder="e.g. Toronto, Canada" />
           </div>
-          <FI label="City / Region" field="location" value={p.location} onChange={set} placeholder="e.g. Toronto, Canada" />
-          <FT label="Current or Most Recent Role" field="currentRole" value={p.currentRole} onChange={set} placeholder="e.g. Senior PM at a fintech startup — laid off 2 months ago" rows={2} />
-          <FS label="Employment Status Right Now" field="employmentStatus" value={p.employmentStatus} onChange={set} options={[
+          <FI label="Current or Most Recent Role" hint="Be specific — this shapes every opportunity we identify" field="currentRole" value={p.currentRole} onChange={set} placeholder="e.g. Senior PM at a fintech startup, laid off 2 months ago" />
+          <FS label="Employment Status" field="employmentStatus" value={p.employmentStatus} onChange={set} options={[
             ["employed", "Employed (side hustle)"], ["unemployed", "Unemployed / laid off"],
             ["freelance", "Already freelancing"], ["student", "Student"],
           ]} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <FI label="Months of Runway Without Income" hint="How many months can you cover expenses?" field="monthlyRunway" value={p.monthlyRunway} onChange={set} placeholder="e.g. 6" type="number" />
+            <FI label="Months of Runway" hint="How long can you cover expenses without income?" field="monthlyRunway" value={p.monthlyRunway} onChange={set} placeholder="e.g. 6" type="number" />
             <FS label="Financial Dependents" hint="Spouse, kids, parents" field="dependents" value={p.dependents} onChange={set} options={[
               ["none", "None"], ["some", "Some"], ["heavy", "Heavy"],
             ]} />
@@ -496,39 +571,16 @@ function IntakeForm({ onSubmit }) {
       ),
     },
     {
-      title: "Background & Skills", subtitle: "The more specific you are, the more targeted the analysis", icon: "②",
-      valid: () => p.skills.trim(),
+      title: "What You Bring", subtitle: "Your background is the raw material — be broad and honest", icon: "②",
+      valid: () => p.industries.length > 0 && p.skills.length > 0,
       fields: (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <FI label="Years of Professional Experience" field="yearsExperience" value={p.yearsExperience} onChange={set} placeholder="e.g. 9" type="number" />
-          <FT label="Industries You've Worked In" field="industries" value={p.industries} onChange={set} placeholder="e.g. Financial services, B2B SaaS, Healthcare IT — be specific" />
-          <FT label="Core Skills & Abilities" field="skills" value={p.skills} onChange={set} rows={3} placeholder="e.g. Product strategy, AI implementation, client consulting, writing, public speaking..." />
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          <ChipGrid label="Industries You've Worked In" hint="Select all that apply — include adjacent or partial experience" field="industries" options={INDUSTRY_OPTIONS} value={p.industries} onChange={set} />
+          <ChipGrid label="Core Skills & Abilities" hint="Pick everything you're genuinely competent at, not just what you love" field="skills" options={SKILL_OPTIONS} value={p.skills} onChange={set} />
           <FS label="Technical / Coding Ability" field="technicalLevel" value={p.technicalLevel} onChange={set} options={[
             ["low", "Non-technical"], ["moderate", "Semi-technical"], ["high", "Technical"], ["expert", "Can build / ship code"],
           ]} />
-          <FS label="Previous Business Attempts" field="prevBizAttempts" value={p.prevBizAttempts} onChange={set} options={[
-            ["none", "None"], ["failed", "Tried and failed"], ["partial", "Partial / stalled"], ["yes", "Yes, successful"],
-          ]} />
-          <FT label="Execution Track Record" hint="Have you shipped things independently, outside a job?" field="executionTrack" value={p.executionTrack} onChange={set} placeholder="e.g. Ran 3 freelance projects, launched a side project with 200 users..." />
-          <FT label="Proof of Work You Already Have" hint="Portfolio, case studies, writing, certs — anything that builds buyer trust" field="proofOfWork" value={p.proofOfWork} onChange={set} placeholder="e.g. 10 published articles, 2 consulting decks delivered, Google PM cert..." />
-        </div>
-      ),
-    },
-    {
-      title: "Network & Assets", subtitle: "Distribution is often more important than the idea itself", icon: "③",
-      valid: () => true,
-      fields: (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <FT label="Who Do You Actually Know?" hint="Not social following — your real warm professional network. Industries, seniority, specific types." field="networkQuality" value={p.networkQuality} onChange={set} rows={2} placeholder="e.g. Strong in fintech at director level, a few ex-colleagues at banks, weak in healthcare..." />
-          <FS label="Social Media Following (combined)" field="socialFollowing" value={p.socialFollowing} onChange={set} options={[
-            ["none", "<500"], ["small", "500–5K"], ["medium", "5K–50K"], ["large", "50K+"],
-          ]} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <FI label="Monthly Marketing Budget ($)" field="marketingBudget" value={p.marketingBudget} onChange={set} placeholder="e.g. 300" type="number" />
-            <FI label="Total Capital Available ($)" field="capitalAvailable" value={p.capitalAvailable} onChange={set} placeholder="e.g. 15000" type="number" />
-          </div>
-          <FT label="Languages & Cultural Access" hint="Fluency in other languages or deep cultural ties can unlock markets others can't reach" field="languages" value={p.languages} onChange={set} placeholder="e.g. Native Mandarin, conversational Spanish, deep South Asian business ties..." />
-          <FS label="Energy Type" hint="Determines which business models actually work for you" field="energyType" value={p.energyType} onChange={set} options={[
+          <FS label="Energy Type" hint="Determines which business models actually suit you" field="energyType" value={p.energyType} onChange={set} options={[
             ["intro", "Introvert — prefer async, writing, 1:1"],
             ["extro", "Extrovert — energised by people, networking"],
             ["ambi", "Ambiverted — comfortable both ways"],
@@ -537,39 +589,30 @@ function IntakeForm({ onSubmit }) {
       ),
     },
     {
-      title: "Positioning & Constraints", subtitle: "Your unfair advantages and hard limits shape what we recommend", icon: "④",
-      valid: () => true,
-      fields: (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <FT label="Your Unfair Advantages" hint="What have you done that's genuinely hard to replicate? Specific experiences, access, credentials." rows={3} field="unfairAdvantages" value={p.unfairAdvantages} onChange={set} placeholder="e.g. 8 years inside a major Canadian bank's innovation team, native Arabic speaker, built and exited a small business..." />
-          <FI label="Most You've Ever Charged for Your Work" hint="Single project, engagement, or hourly. Reveals your pricing psychology." field="highestCharged" value={p.highestCharged} onChange={set} placeholder="e.g. $5,000 project, $150/hr, $25K engagement" />
-          <FT label="Sectors / Areas You're Drawn To" hint="Optional. Leave blank for fully open analysis." field="interestedSectors" value={p.interestedSectors} onChange={set} placeholder="e.g. sustainability, wellness, real estate, education — or leave blank" />
-          <FT label="Absolute Deal-Breakers" field="mustAvoid" value={p.mustAvoid} onChange={set} placeholder="e.g. No cold calling, no physical products, must stay remote..." />
-          <FT label="Work Style & Preferences" field="workStyle" value={p.workStyle} onChange={set} placeholder="e.g. Prefer written deliverables, love deep focused work, happy to travel monthly..." />
-        </div>
-      ),
-    },
-    {
-      title: "Goals & Timeline", subtitle: "Sets the financial model and urgency calibration", icon: "⑤",
+      title: "Your Direction", subtitle: "Goals, constraints, and what gives you an edge", icon: "③",
       valid: () => p.targetIncome.trim(),
       fields: (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <FS label="Risk Tolerance" field="riskTolerance" value={p.riskTolerance} onChange={set} options={[
-            ["low", "Conservative — need predictable income"],
-            ["medium", "Moderate — okay with some uncertainty"],
-            ["high", "Aggressive — willing to go all-in"],
-          ]} />
-          <FS label="Time Available for This" field="timeCommitment" value={p.timeCommitment} onChange={set} options={[
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <FI label="Target Annual Income ($)" hint="What does success look like in Year 2–3?" field="targetIncome" value={p.targetIncome} onChange={set} placeholder="e.g. 150000" type="number" />
+            <FI label="Capital Available ($)" hint="Budget for tools, marketing, setup" field="capitalAvailable" value={p.capitalAvailable} onChange={set} placeholder="e.g. 10000" type="number" />
+          </div>
+          <FS label="Time Available" field="timeCommitment" value={p.timeCommitment} onChange={set} options={[
             ["parttime", "Part-time (nights/weekends)"],
             ["fulltime", "Full-time focus"],
             ["flexible", "Flexible / ramping up"],
           ]} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <FI label="Target Annual Income ($)" hint="What does success look like in Year 2–3?" field="targetIncome" value={p.targetIncome} onChange={set} placeholder="e.g. 180000" type="number" />
-            <FS label="Timeline to First Revenue" field="timelineToRevenue" value={p.timelineToRevenue} onChange={set} options={[
-              ["3months", "< 3 months"], ["6months", "6 months"], ["1year", "1 year"], ["2years+", "2+ years"],
-            ]} />
-          </div>
+          <FS label="Timeline to First Revenue" field="timelineToRevenue" value={p.timelineToRevenue} onChange={set} options={[
+            ["3months", "< 3 months"], ["6months", "6 months"], ["1year", "1 year"], ["2years+", "2+ years"],
+          ]} />
+          <FS label="Risk Tolerance" field="riskTolerance" value={p.riskTolerance} onChange={set} options={[
+            ["low", "Conservative — need predictable income"],
+            ["medium", "Moderate — okay with uncertainty"],
+            ["high", "Aggressive — willing to go all-in"],
+          ]} />
+          <ChipGrid label="Sectors You're Drawn To" hint="Optional — leave empty for fully open analysis" field="interestedSectors" options={SECTOR_OPTIONS} value={p.interestedSectors} onChange={set} />
+          <ChipGrid label="Absolute Deal-Breakers" hint="Optional — things you will not do regardless of the opportunity" field="mustAvoid" options={AVOID_OPTIONS} value={p.mustAvoid} onChange={set} />
+          <ChipGrid label="Unfair Advantages" hint="Optional — what makes you genuinely hard to replicate?" field="unfairAdvantages" options={ADVANTAGE_OPTIONS} value={p.unfairAdvantages} onChange={set} />
         </div>
       ),
     },
@@ -577,7 +620,6 @@ function IntakeForm({ onSubmit }) {
 
   const cur = STEPS[step];
   const canNext = cur.valid();
-  const totalQ = buildQuestions(BLANK).length;
 
   return (
     <div style={{ maxWidth: 620, margin: "0 auto", padding: "0 18px 80px" }}>
@@ -618,7 +660,7 @@ function IntakeForm({ onSubmit }) {
               background: T.accent, border: "none", color: "#fff", padding: "10px 24px",
               fontSize: 11, fontFamily: T.font, cursor: "pointer", borderRadius: 4, fontWeight: 700,
               letterSpacing: 1, textTransform: "uppercase",
-            }}>Run {totalQ} Research Calls</button>
+            }}>Run Deep Research →</button>
           }
         </div>
       </Card>
@@ -637,44 +679,54 @@ function ResearchEngine({ profile, onBack, restoredResults }) {
   useEffect(() => {
     if (ran.current) return;
     ran.current = true;
-    const SYS = `You are a senior strategy partner. Brutally honest, hyper-specific, actionable. Plain prose or numbered lists. No bullet symbols, asterisks, or markdown.`;
-    const qs = buildQuestions(profile);
-    const total = qs.length;
 
-    // Split into 4 parallel batches based on dependency order
-    const PHASE = {
-      0: ["readiness","strengths","blindspots","networkgap","macro","sectors","timing","hidden","o1_title","o2_title","o3_title"],
-      1: ["o1_concept","o1_market","o1_revenue","o1_risks","o1_validate","o2_concept","o2_market","o2_revenue","o2_risks","o2_validate","o3_concept","o3_market","o3_revenue","o3_risks","o3_validate","compare"],
-      2: ["p1_pitch","p1_launch","p1_clients","p1_pricing","p1_leverage","p2_pitch","p2_launch","p2_clients","p2_pricing","p2_leverage","p3_pitch","p3_launch","p3_clients","p3_pricing","p3_leverage"],
-      3: ["recommendation","yearone","redflags","pricingpsych"],
-    };
-    const phases = [0,1,2,3].map(i => qs.filter(q => PHASE[i].includes(q.key)));
+    const PHASE_LABELS = ["Profiling & market scan", "Deep opportunity analysis", "Building playbooks", "Synthesizing recommendations"];
+    const PHASE1_KEYS = ["o1_concept","o1_market","o1_revenue","o1_risks","o1_validate","o2_concept","o2_market","o2_revenue","o2_risks","o2_validate","o3_concept","o3_market","o3_revenue","o3_risks","o3_validate","compare"];
+    const PHASE2_KEYS = ["p1_pitch","p1_launch","p1_clients","p1_pricing","p1_leverage","p2_pitch","p2_launch","p2_clients","p2_pricing","p2_leverage","p3_pitch","p3_launch","p3_clients","p3_pricing","p3_leverage"];
+    const PHASE3_KEYS = ["recommendation","yearone","redflags","pricingpsych"];
 
-    setProgress({ done: 0, label: "Starting research…", total, phase: 0 });
+    setProgress({ done: 0, label: "Starting research…", total: TOTAL_CALLS, phase: 0 });
 
     (async () => {
       const data = {};
-      let done = 0;
-      const PHASE_LABELS = ["Profiling & market scan","Deep opportunity analysis","Building playbooks","Synthesizing recommendations"];
+      let doneCount = 0;
 
-      for (let pi = 0; pi < phases.length; pi++) {
-        setProgress(p => ({ ...p, label: PHASE_LABELS[pi], phase: pi }));
+      const runPhase = async (qs, phaseIndex) => {
+        setProgress(p => ({ ...p, label: PHASE_LABELS[phaseIndex], phase: phaseIndex }));
         await runBatch(
-          phases[pi].map(q => async () => {
-            try { data[q.key] = await ask(SYS, q.prompt, 420); }
+          qs.map(q => async () => {
+            try { data[q.key] = await ask(RESEARCH_SYS, q.prompt, 420); }
             catch { data[q.key] = ""; }
             return q.key;
           }),
           () => {
-            done++;
-            setProgress(p => ({ ...p, done, label: PHASE_LABELS[pi] }));
+            doneCount++;
+            setProgress(p => ({ ...p, done: doneCount, label: PHASE_LABELS[phaseIndex] }));
             setResults({ ...data });
           },
           5
         );
-      }
+      };
 
-      setProgress(p => ({ ...p, done: total, label: "Complete" }));
+      // Phase 0: profile + market + generate 3 titles
+      await runPhase(buildPhase0(profile), 0);
+
+      // Extract actual titles — inject them into all subsequent prompts
+      const titles = {
+        o1: (data.o1_title || "").trim() || "Best-Fit Opportunity",
+        o2: (data.o2_title || "").trim() || "Alternative Opportunity",
+        o3: (data.o3_title || "").trim() || "High-Upside Opportunity",
+      };
+      const laterQs = buildPhase1to3(profile, titles);
+
+      // Phase 1: opportunity deep-dives (titles now injected in prompts)
+      await runPhase(laterQs.filter(q => PHASE1_KEYS.includes(q.key)), 1);
+      // Phase 2: playbooks (titles injected)
+      await runPhase(laterQs.filter(q => PHASE2_KEYS.includes(q.key)), 2);
+      // Phase 3: synthesis (titles injected)
+      await runPhase(laterQs.filter(q => PHASE3_KEYS.includes(q.key)), 3);
+
+      setProgress(p => ({ ...p, done: TOTAL_CALLS, label: "Complete" }));
       setDone(true);
       saveReport(profile, data);
     })();
@@ -749,7 +801,7 @@ function ResearchEngine({ profile, onBack, restoredResults }) {
         {tab === 0 && (
           <div style={{ animation: "fadeUp 0.3s ease" }}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20, padding: "12px 14px", background: T.panel, border: `1px solid ${T.border}`, borderRadius: 6 }}>
-              {[profile.currentRole, `${profile.yearsExperience}yr exp`, profile.employmentStatus, `${profile.monthlyRunway || "?"}mo runway`, profile.riskTolerance + " risk", profile.energyType, profile.technicalLevel + " tech"].filter(Boolean).map((tag, i) => (
+              {[profile.currentRole, profile.employmentStatus, `${profile.monthlyRunway || "?"}mo runway`, profile.riskTolerance + " risk", profile.energyType, profile.technicalLevel + " tech"].filter(Boolean).map((tag, i) => (
                 <Chip key={i} color={T.muted}>{tag}</Chip>
               ))}
             </div>
@@ -1142,7 +1194,7 @@ export default function App() {
               Your profile.<br /><em style={{ color: T.accent }}>Your opportunities.</em>
             </h1>
             <p style={{ fontSize: 12, color: T.muted, lineHeight: 1.8, maxWidth: 460, marginBottom: 6 }}>
-              {buildQuestions(BLANK).length} targeted research calls — market signals, sector analysis, 3 tailored opportunities with 7-day validation checklists, full launch playbooks, and a pricing psychology diagnosis. Every industry, not just tech.
+              {TOTAL_CALLS} targeted research calls — market signals, sector analysis, 3 tailored opportunities with 7-day validation checklists, full launch playbooks, and a pricing psychology diagnosis. Every industry, not just tech.
             </p>
           </div>
           <IntakeForm onSubmit={p => { setProfile(p); setScreen("research"); setRestored(null); }} />
