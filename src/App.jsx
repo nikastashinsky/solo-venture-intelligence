@@ -283,7 +283,11 @@ const BLANK = {
 };
 
 // ─── RESEARCH QUESTIONS ───────────────────────────────────────────────────────
-const RESEARCH_SYS = `You are a senior partner at a top-tier strategy firm. Deep expertise across all industries — consumer, healthcare, finance, real estate, media, education, professional services, manufacturing, technology. Brutally honest, hyper-specific, never generic. Plain prose or numbered lists. No bullet symbols, asterisks, or markdown headers. Early 2026.`;
+const RESEARCH_SYS = `You are an expert business analyst and monetization strategist specializing in solo and micro-business ventures. Your job is to identify genuinely feasible opportunities that a real person can build and get paid for — based on their specific skills, experience, and circumstances — across ALL industries, not just tech.
+
+Core mandate: prioritize scaleable, repeatable business models over pure hourly consulting. This means productized services, recurring subscriptions, digital products, licensing, content and IP, systematized agencies, info products, coaching programs, SaaS tools, niche platforms, or any model where the founder's income is not entirely dependent on trading their own hours. Every recommendation must have a credible path to generating revenue without requiring the founder's direct presence for every dollar earned.
+
+Be brutally honest. Be hyper-specific. Never give generic advice. Use plain prose or numbered lists. No bullet symbols, asterisks, or markdown headers. Early 2026.`;
 
 function buildCtx(p) {
   const industries = Array.isArray(p.industries) ? p.industries.join(", ") : (p.industries || "");
@@ -309,17 +313,17 @@ function buildPhase0(p) {
   const ctx = buildCtx(p);
   const industries = Array.isArray(p.industries) ? p.industries.join(", ") : (p.industries || "");
   return [
-    { key: "readiness", label: "Assessing solo business readiness", prompt: `${ctx}\n\nHonest readiness assessment for going solo. Consider runway (${p.monthlyRunway || "unknown"} months), employment status (${p.employmentStatus}), dependents (${p.dependents}). Ready now or not? 3-4 sentences. No flattery.` },
-    { key: "strengths", label: "Mapping genuine strengths", prompt: `${ctx}\n\n3 most defensible strengths for building a solo business — specific to their actual background, not generic. Number 1-3. One concrete sentence each.` },
-    { key: "blindspots", label: "Identifying blind spots", prompt: `${ctx}\n\n3 most likely blind spots or self-deceptions about starting a business. Consider energy type (${p.energyType}), risk tolerance (${p.riskTolerance}). Specific and honest. Number 1-3.` },
-    { key: "networkgap", label: "Analyzing network & distribution gaps", prompt: `${ctx}\n\nBiggest distribution and network gaps given their role and industry background. What specific relationships are missing to get first clients? 3-4 sentences.` },
-    { key: "macro", label: "Scanning macro economic signals", prompt: `${ctx}\n\n4 macro signals most relevant to this person's background in ${industries || "their field"} launching in ${p.location} in early 2026. Format each line: SIGNAL | tailwind or headwind | what this means for this person specifically. One per line. No other text.` },
-    { key: "sectors", label: "Identifying high-opportunity sectors", prompt: `${ctx}\n\n5 highest-opportunity sectors for a solo in ${p.location} in early 2026. Beyond technology. Weight demographic shifts, regulatory changes, underserved markets. Number 1-5. Format: SECTOR NAME: why hot + how it fits this person.` },
-    { key: "timing", label: "Assessing personal market timing", prompt: `${ctx}\n\nBlunt 3-sentence verdict: given runway (${p.monthlyRunway || "unknown"} months), capital ($${p.capitalAvailable || 0}), dependents (${p.dependents}), risk tolerance (${p.riskTolerance}) — is now the right time? If not, when and what needs to change?` },
-    { key: "hidden", label: "Surfacing non-obvious market gaps", prompt: `${ctx}\n\n4 hidden market gaps this person can fill that they probably haven't thought of. Based on background in ${industries || "their field"}, location ${p.location}, energy type (${p.energyType}). Surprising. Number 1-4. Format: GAP: why underserved + why this person.` },
-    { key: "o1_title", label: "Identifying best-fit opportunity", prompt: `${ctx}\n\nSingle best solo business opportunity for this person. Highest probability of success given their specific background. Do NOT default to AI consulting unless genuinely best fit. Consider ALL industries. Respond with only the opportunity title in 4-8 words. Nothing else.` },
-    { key: "o2_title", label: "Identifying alternative opportunity", prompt: `${ctx}\n\nSecond solo business opportunity — genuinely different industry or model from the obvious first choice. Respond with only the opportunity title in 4-8 words. Nothing else.` },
-    { key: "o3_title", label: "Identifying high-upside opportunity", prompt: `${ctx}\n\nThird opportunity — highest-upside, ambitious, unconventional, high risk/reward. Must be distinct from the first two options. Respond with only the opportunity title in 4-8 words. Nothing else.` },
+    { key: "readiness", label: "Assessing monetization readiness", prompt: `${ctx}\n\nHonest assessment: is this person ready to build something and start making money on their own right now? Consider runway (${p.monthlyRunway || "unknown"} months), employment (${p.employmentStatus}), dependents (${p.dependents}). What is their single most significant blocker? 3-4 sentences. No flattery.` },
+    { key: "strengths", label: "Mapping monetizable strengths", prompt: `${ctx}\n\n3 competencies this person has that are genuinely monetizable — specific to their actual background, not aspirational. Focus on what paying customers or clients would actually buy. Number 1-3. One concrete sentence each.` },
+    { key: "blindspots", label: "Identifying blind spots", prompt: `${ctx}\n\n3 things this person is likely wrong about when it comes to building a solo venture. Consider energy type (${p.energyType}), risk tolerance (${p.riskTolerance}), and the gap between what they think they can sell vs. what the market actually pays for. Number 1-3. Specific and honest.` },
+    { key: "networkgap", label: "Analyzing distribution gaps", prompt: `${ctx}\n\nWhere is this person's biggest gap in reaching paying customers or clients — given their role and industry background? What specific types of relationships or channels are missing, and what's the most realistic way to fill them quickly? 3-4 sentences.` },
+    { key: "macro", label: "Scanning macro signals", prompt: `${ctx}\n\n4 macro trends most relevant to what this person could realistically monetize — given their background in ${industries || "their field"} in ${p.location}, early 2026. Format each line: SIGNAL | tailwind or headwind | specific implication for this person's monetization potential. One per line. No other text.` },
+    { key: "sectors", label: "Identifying high-opportunity sectors", prompt: `${ctx}\n\n5 sectors where a solo with this person's background could build a scaleable, repeatable revenue stream in ${p.location} in 2026. Bias toward sectors with recurring spend, structural tailwinds, or underserved demand. Number 1-5. Format: SECTOR: why now + specific angle for this person.` },
+    { key: "timing", label: "Assessing timing", prompt: `${ctx}\n\nBlunt verdict: given runway (${p.monthlyRunway || "unknown"} months), capital ($${p.capitalAvailable || 0}), dependents (${p.dependents}), risk tolerance (${p.riskTolerance}) — should they move now or prepare first? If not now, what specifically needs to change? 3 sentences.` },
+    { key: "hidden", label: "Surfacing hidden monetization angles", prompt: `${ctx}\n\n4 monetization angles this person probably hasn't considered — based on their background in ${industries || "their field"}, location ${p.location}, and energy type (${p.energyType}). Each should be something they could feasibly build into a scaleable model. Number 1-4. Format: OPPORTUNITY: why overlooked + why this person is positioned for it.` },
+    { key: "o1_title", label: "Identifying best-fit opportunity", prompt: `${ctx}\n\nThe single best solo venture this person could realistically build and monetize — highest probability of reaching repeatable revenue given their specific background. Must have a path to scale beyond trading hours. Avoid generic consulting unless it can be productized. Consider all industries. Respond with only the venture title in 4-8 words. Nothing else.` },
+    { key: "o2_title", label: "Identifying alternative opportunity", prompt: `${ctx}\n\nA second viable solo venture — genuinely different industry or model from the first. Must be something this person can plausibly build and get paid for. Scaleable or automatable path preferred. Respond with only the venture title in 4-8 words. Nothing else.` },
+    { key: "o3_title", label: "Identifying high-upside opportunity", prompt: `${ctx}\n\nA third, higher-ceiling solo venture — more ambitious, more leverage, more upside if it works. Something with strong scale or automation potential. Must be distinct from the first two. Respond with only the venture title in 4-8 words. Nothing else.` },
   ];
 }
 
@@ -331,48 +335,48 @@ function buildPhase1to3(p, titles) {
   const o3 = titles.o3 || "High-Upside Opportunity";
   return [
     // ── Opportunity 1 ──
-    { key: "o1_concept", label: "Defining Opportunity 1", prompt: `${ctx}\n\nFor the solo business opportunity titled "${o1}": describe exactly what it is, the specific target customer, the revenue model, and why this person in particular. Account for their energy type (${p.energyType}). 3-4 sentences.` },
-    { key: "o1_market", label: "Sizing Opportunity 1", prompt: `${ctx}\n\nFor "${o1}": describe the realistic market for a solo in ${p.location}. What do customers pay? Cite 2-3 real-world analogues or comparables. 3-4 sentences.` },
-    { key: "o1_revenue", label: "Modeling Opportunity 1 revenue", prompt: `${ctx}\n\nConservative revenue projections for "${o1}". One line exactly: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
-    { key: "o1_risks", label: "Stress-testing Opportunity 1", prompt: `${ctx}\n\nFor "${o1}": the 3 most likely failure modes specific to this founder's profile. Number 1-3. Add one sentence on the wild success condition.` },
-    { key: "o1_validate", label: "Building Opportunity 1 validation checklist", prompt: `${ctx}\n\nFor "${o1}": 5 specific actions to take in the next 7 days to test if this opportunity is real. Name who to contact, what to say, what a positive signal looks like. Number 1-5.` },
+    { key: "o1_concept", label: "Defining Opportunity 1", prompt: `${ctx}\n\nFor the solo venture titled "${o1}": describe exactly what it is, the specific paying customer, and the revenue model. Explain how this generates income beyond just trading hours — what makes it repeatable or scaleable. Why is this person specifically positioned to build it? Account for energy type (${p.energyType}). 3-4 sentences.` },
+    { key: "o1_market", label: "Sizing Opportunity 1", prompt: `${ctx}\n\nFor "${o1}": who actually pays for this and how much, in ${p.location}? What is the realistic addressable market for one person? Cite 2-3 real-world analogues, comparables, or existing businesses. 3-4 sentences.` },
+    { key: "o1_revenue", label: "Modeling Opportunity 1 revenue", prompt: `${ctx}\n\nConservative revenue projections for "${o1}" — assume a realistic ramp. One line exactly: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
+    { key: "o1_risks", label: "Stress-testing Opportunity 1", prompt: `${ctx}\n\nFor "${o1}": the 3 most likely reasons this specific founder fails to monetize it. Be specific to their profile — not generic startup risks. Number 1-3. Add one sentence on what wild success looks like.` },
+    { key: "o1_validate", label: "Building Opportunity 1 validation checklist", prompt: `${ctx}\n\nFor "${o1}": 5 concrete actions to take in the next 7 days to test whether this is real and whether people will pay. Name who to contact, exactly what to ask, and what a positive signal looks like. Number 1-5.` },
     // ── Opportunity 2 ──
-    { key: "o2_concept", label: "Defining Opportunity 2", prompt: `${ctx}\n\nFor the solo business opportunity titled "${o2}": describe exactly what it is, the specific target customer, the revenue model, and why this person. 3-4 sentences.` },
-    { key: "o2_market", label: "Sizing Opportunity 2", prompt: `${ctx}\n\nFor "${o2}": realistic market in ${p.location}. Customer pricing, 2-3 real analogues. 3-4 sentences.` },
-    { key: "o2_revenue", label: "Modeling Opportunity 2 revenue", prompt: `${ctx}\n\nRevenue for "${o2}". One line: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
-    { key: "o2_risks", label: "Stress-testing Opportunity 2", prompt: `${ctx}\n\nFor "${o2}": 3 most likely failure modes for this founder. Number 1-3. One sentence on wild success condition.` },
-    { key: "o2_validate", label: "Building Opportunity 2 validation checklist", prompt: `${ctx}\n\nFor "${o2}": 5 specific 7-day validation actions. Number 1-5.` },
+    { key: "o2_concept", label: "Defining Opportunity 2", prompt: `${ctx}\n\nFor the solo venture titled "${o2}": what it is, the specific paying customer, and the revenue model. How does this generate repeatable income — what's the path beyond just billing hours? Why this person? 3-4 sentences.` },
+    { key: "o2_market", label: "Sizing Opportunity 2", prompt: `${ctx}\n\nFor "${o2}": who pays and how much, in ${p.location}? Realistic addressable market for one person. 2-3 real analogues. 3-4 sentences.` },
+    { key: "o2_revenue", label: "Modeling Opportunity 2 revenue", prompt: `${ctx}\n\nRevenue projections for "${o2}". One line: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
+    { key: "o2_risks", label: "Stress-testing Opportunity 2", prompt: `${ctx}\n\nFor "${o2}": 3 most likely reasons this founder specifically fails to make it work. Number 1-3. One sentence on wild success condition.` },
+    { key: "o2_validate", label: "Building Opportunity 2 validation checklist", prompt: `${ctx}\n\nFor "${o2}": 5 specific 7-day actions to test whether people will actually pay. Number 1-5.` },
     // ── Opportunity 3 ──
-    { key: "o3_concept", label: "Defining Opportunity 3", prompt: `${ctx}\n\nFor the ambitious solo opportunity titled "${o3}": describe what it is, specific customer, revenue model, and why this person could pull it off. 3-4 sentences.` },
-    { key: "o3_market", label: "Sizing Opportunity 3", prompt: `${ctx}\n\nFor "${o3}": market in ${p.location}. Pricing, 2-3 real analogues. 3-4 sentences.` },
-    { key: "o3_revenue", label: "Modeling Opportunity 3 revenue", prompt: `${ctx}\n\nRevenue for "${o3}". One line: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
-    { key: "o3_risks", label: "Stress-testing Opportunity 3", prompt: `${ctx}\n\nFor "${o3}": 3 most likely failure modes. Number 1-3. One sentence on wild success condition.` },
-    { key: "o3_validate", label: "Building Opportunity 3 validation checklist", prompt: `${ctx}\n\nFor "${o3}": 5 specific 7-day validation actions. Number 1-5.` },
+    { key: "o3_concept", label: "Defining Opportunity 3", prompt: `${ctx}\n\nFor the higher-ceiling venture titled "${o3}": what it is, specific paying customer, revenue model, and what makes it scaleable beyond the founder's direct time. Why could this person specifically build it? 3-4 sentences.` },
+    { key: "o3_market", label: "Sizing Opportunity 3", prompt: `${ctx}\n\nFor "${o3}": who pays and how much, in ${p.location}? What's the ceiling if it works? 2-3 real analogues. 3-4 sentences.` },
+    { key: "o3_revenue", label: "Modeling Opportunity 3 revenue", prompt: `${ctx}\n\nRevenue projections for "${o3}". One line: Y1: $X | Y2: $X | Y3: $X | MARGIN: X% | TIME_TO_FIRST_$: X | CONFIDENCE: high/medium/low` },
+    { key: "o3_risks", label: "Stress-testing Opportunity 3", prompt: `${ctx}\n\nFor "${o3}": 3 most likely reasons this founder fails to monetize it. Number 1-3. One sentence on wild success condition.` },
+    { key: "o3_validate", label: "Building Opportunity 3 validation checklist", prompt: `${ctx}\n\nFor "${o3}": 5 specific 7-day actions to test real market demand. Number 1-5.` },
     // ── Compare ──
-    { key: "compare", label: "Comparing all three opportunities", prompt: `${ctx}\n\nCompare "${o1}" vs "${o2}" vs "${o3}". One line per dimension: DIMENSION: Opp1 vs Opp2 vs Opp3. Dimensions: REVENUE CEILING, TIME TO FIRST CLIENT, CAPITAL REQUIRED, FITS ENERGY TYPE, NETWORK LEVERAGE, SKILL FIT, BIGGEST RISK, BEST FOR PROFILE TYPE` },
+    { key: "compare", label: "Comparing all three opportunities", prompt: `${ctx}\n\nCompare "${o1}" vs "${o2}" vs "${o3}". One line per dimension: DIMENSION: Opp1 vs Opp2 vs Opp3. Dimensions: REVENUE CEILING, SCALABILITY POTENTIAL, TIME TO FIRST $, CAPITAL REQUIRED, AUTOMATION POTENTIAL, SKILL FIT, FITS ENERGY TYPE, BIGGEST EXECUTION RISK` },
     // ── Playbook 1 ──
-    { key: "p1_pitch", label: "Writing Playbook 1: positioning", prompt: `${ctx}\n\nFor "${o1}": write a 2-sentence positioning statement for when asked "what do you do?" Specific to their background. No jargon.` },
-    { key: "p1_launch", label: "Writing Playbook 1: launch plan", prompt: `${ctx}\n\nFor "${o1}" with $${p.capitalAvailable || 0} capital: WEEK 1-2: [3 specific actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
-    { key: "p1_clients", label: "Writing Playbook 1: client acquisition", prompt: `${ctx}\n\nFor "${o1}": 3 client acquisition strategies. Name real platforms/communities. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
-    { key: "p1_pricing", label: "Writing Playbook 1: pricing", prompt: `${ctx}\n\nPricing tiers for "${o1}". ENTRY: [price — what's included] | CORE: [price — what's included] | PREMIUM: [price — what's included] | RATIONALE: [one sentence]` },
-    { key: "p1_leverage", label: "Writing Playbook 1: leverage & mistakes", prompt: `${ctx}\n\nFor "${o1}": LEAD MAGNET: [specific asset] | AI LEVERAGE: [how AI tools accelerate this business] | SCALE PATH: [path beyond solo] | FATAL MISTAKES: 1. [specific to profile] 2. [mistake] 3. [mistake]` },
+    { key: "p1_pitch", label: "Writing Playbook 1: positioning", prompt: `${ctx}\n\nFor "${o1}": write a 2-sentence answer to "what do you do?" that clearly communicates who it's for and why they should pay for it. Specific, no jargon.` },
+    { key: "p1_launch", label: "Writing Playbook 1: launch plan", prompt: `${ctx}\n\nFor "${o1}" with $${p.capitalAvailable || 0} capital — concrete week-by-week launch steps focused on getting to first paid engagement fast: WEEK 1-2: [3 specific actions] | MILESTONE: [first paid signal] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [repeatable revenue]` },
+    { key: "p1_clients", label: "Writing Playbook 1: client acquisition", prompt: `${ctx}\n\nFor "${o1}": 3 specific channels to find first paying customers or clients. Name real platforms, communities, or networks. CHANNEL NAME (effort: low/medium/high): [exact first steps]` },
+    { key: "p1_pricing", label: "Writing Playbook 1: pricing", prompt: `${ctx}\n\nPricing structure for "${o1}" — design for repeatability, not one-off projects. ENTRY: [price — what's included] | CORE: [price — what's included] | PREMIUM: [price — what's included] | RATIONALE: [one sentence on pricing logic]` },
+    { key: "p1_leverage", label: "Writing Playbook 1: scale & mistakes", prompt: `${ctx}\n\nFor "${o1}": LEAD MAGNET: [specific free asset that builds trust and pipeline] | AI LEVERAGE: [specific way AI tools reduce the founder's manual hours in this business] | SCALE PATH: [concrete path to revenue that doesn't require more of the founder's time — automation, productization, delegation] | FATAL MISTAKES: 1. [specific to this profile] 2. [mistake] 3. [mistake]` },
     // ── Playbook 2 ──
-    { key: "p2_pitch", label: "Writing Playbook 2: positioning", prompt: `${ctx}\n\nFor "${o2}": 2-sentence positioning statement. Specific, no jargon.` },
-    { key: "p2_launch", label: "Writing Playbook 2: launch plan", prompt: `${ctx}\n\nFor "${o2}": WEEK 1-2: [3 actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
-    { key: "p2_clients", label: "Writing Playbook 2: client acquisition", prompt: `${ctx}\n\nFor "${o2}": 3 acquisition strategies. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
-    { key: "p2_pricing", label: "Writing Playbook 2: pricing", prompt: `${ctx}\n\nPricing for "${o2}". ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
-    { key: "p2_leverage", label: "Writing Playbook 2: leverage & mistakes", prompt: `${ctx}\n\nFor "${o2}": LEAD MAGNET: [specific] | AI LEVERAGE: [how AI helps] | SCALE PATH: [growth path] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
+    { key: "p2_pitch", label: "Writing Playbook 2: positioning", prompt: `${ctx}\n\nFor "${o2}": 2-sentence answer to "what do you do?" Specific, no jargon.` },
+    { key: "p2_launch", label: "Writing Playbook 2: launch plan", prompt: `${ctx}\n\nFor "${o2}" — steps to first paid engagement: WEEK 1-2: [3 actions] | MILESTONE: [first paid signal] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [repeatable revenue]` },
+    { key: "p2_clients", label: "Writing Playbook 2: client acquisition", prompt: `${ctx}\n\nFor "${o2}": 3 specific channels to find first paying customers. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
+    { key: "p2_pricing", label: "Writing Playbook 2: pricing", prompt: `${ctx}\n\nPricing for "${o2}" — design for repeatability. ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
+    { key: "p2_leverage", label: "Writing Playbook 2: scale & mistakes", prompt: `${ctx}\n\nFor "${o2}": LEAD MAGNET: [specific asset] | AI LEVERAGE: [specific way AI reduces manual hours] | SCALE PATH: [concrete path to revenue beyond founder's direct time] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
     // ── Playbook 3 ──
-    { key: "p3_pitch", label: "Writing Playbook 3: positioning", prompt: `${ctx}\n\nFor "${o3}": 2-sentence positioning statement. Specific, no jargon.` },
-    { key: "p3_launch", label: "Writing Playbook 3: launch plan", prompt: `${ctx}\n\nFor "${o3}": WEEK 1-2: [3 actions] | MILESTONE: [outcome] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [outcome]` },
-    { key: "p3_clients", label: "Writing Playbook 3: client acquisition", prompt: `${ctx}\n\nFor "${o3}": 3 acquisition strategies. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
-    { key: "p3_pricing", label: "Writing Playbook 3: pricing", prompt: `${ctx}\n\nPricing for "${o3}". ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
-    { key: "p3_leverage", label: "Writing Playbook 3: leverage & mistakes", prompt: `${ctx}\n\nFor "${o3}": LEAD MAGNET: [specific] | AI LEVERAGE: [how AI accelerates] | SCALE PATH: [growth path] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
+    { key: "p3_pitch", label: "Writing Playbook 3: positioning", prompt: `${ctx}\n\nFor "${o3}": 2-sentence answer to "what do you do?" Specific, no jargon.` },
+    { key: "p3_launch", label: "Writing Playbook 3: launch plan", prompt: `${ctx}\n\nFor "${o3}" — steps to first paid engagement: WEEK 1-2: [3 actions] | MILESTONE: [first paid signal] || WEEK 3-6: [3 actions] | MILESTONE: [outcome] || WEEK 7-12: [3 actions] | MILESTONE: [repeatable revenue]` },
+    { key: "p3_clients", label: "Writing Playbook 3: client acquisition", prompt: `${ctx}\n\nFor "${o3}": 3 specific channels to find paying customers. CHANNEL NAME (effort: low/medium/high): [exact steps]` },
+    { key: "p3_pricing", label: "Writing Playbook 3: pricing", prompt: `${ctx}\n\nPricing for "${o3}" — design for repeatability. ENTRY: [price — included] | CORE: [price — included] | PREMIUM: [price — included] | RATIONALE: [one sentence]` },
+    { key: "p3_leverage", label: "Writing Playbook 3: scale & mistakes", prompt: `${ctx}\n\nFor "${o3}": LEAD MAGNET: [specific asset] | AI LEVERAGE: [specific way AI reduces manual hours] | SCALE PATH: [concrete path to revenue beyond founder's direct time] | FATAL MISTAKES: 1. [specific] 2. [mistake] 3. [mistake]` },
     // ── Synthesis ──
-    { key: "recommendation", label: "Synthesizing final recommendation", prompt: `${ctx}\n\nBetween "${o1}", "${o2}", and "${o3}" — which ONE should this founder pursue first? Be definitive. Weight runway, capital, dependents, energy type, risk tolerance. 3-4 sentences. No hedging.` },
-    { key: "yearone", label: "Mapping Year 1 quarter by quarter", prompt: `${ctx}\n\nFor the recommended opportunity: Q1: [priority + measurable outcome] | Q2: [priority + outcome] | Q3: [priority + outcome] | Q4: [priority + outcome]` },
-    { key: "redflags", label: "Flagging likely failure modes", prompt: `${ctx}\n\n3 things this founder is most likely to get wrong going solo. Not generic — specific to this person's profile. Number 1-3.` },
-    { key: "pricingpsych", label: "Diagnosing pricing psychology", prompt: `${ctx}\n\nTarget income: $${p.targetIncome || 0}/yr. Risk tolerance: ${p.riskTolerance}. Diagnose this founder's likely pricing psychology gap and the specific mindset shift required. 3-4 sentences.` },
+    { key: "recommendation", label: "Synthesizing final recommendation", prompt: `${ctx}\n\nBetween "${o1}", "${o2}", and "${o3}" — which ONE gives this person the clearest path to repeatable, scaleable income given who they actually are? Be definitive. Weight scalability potential alongside runway, capital, dependents, energy type, risk tolerance. 3-4 sentences. No hedging.` },
+    { key: "yearone", label: "Mapping Year 1 roadmap", prompt: `${ctx}\n\nFor the recommended venture — practical quarterly milestones focused on getting to repeatable revenue: Q1: [priority + measurable outcome] | Q2: [priority + outcome] | Q3: [priority + outcome] | Q4: [priority + outcome]` },
+    { key: "redflags", label: "Flagging likely failure modes", prompt: `${ctx}\n\n3 things this specific person is most likely to get wrong — not generic startup mistakes but things directly tied to their profile, energy type, and background. Number 1-3.` },
+    { key: "pricingpsych", label: "Diagnosing pricing psychology", prompt: `${ctx}\n\nTarget income: $${p.targetIncome || 0}/yr. Risk tolerance: ${p.riskTolerance}. This person needs to build a scaleable revenue model, not just bill hours. Diagnose the specific mindset or pricing pattern that will hold them back, and what shift is required. 3-4 sentences.` },
   ];
 }
 
@@ -548,7 +552,7 @@ function IntakeForm({ onSubmit }) {
 
   const STEPS = [
     {
-      title: "Your Situation", subtitle: "Helps calibrate urgency and risk tolerance accurately", icon: "①",
+      title: "Your Situation", subtitle: "Sets the financial constraints and urgency of your launch window", icon: "①",
       valid: () => p.location.trim() && p.currentRole.trim(),
       fields: (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -571,7 +575,7 @@ function IntakeForm({ onSubmit }) {
       ),
     },
     {
-      title: "What You Bring", subtitle: "Your background is the raw material — be broad and honest", icon: "②",
+      title: "What You Bring", subtitle: "Your skills and experience are the raw material — the more complete, the better the analysis", icon: "②",
       valid: () => p.industries.length > 0 && p.skills.length > 0,
       fields: (
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -589,7 +593,7 @@ function IntakeForm({ onSubmit }) {
       ),
     },
     {
-      title: "Your Direction", subtitle: "Goals, constraints, and what gives you an edge", icon: "③",
+      title: "Your Direction", subtitle: "Income goals, timeline, and constraints that shape what's actually feasible for you", icon: "③",
       valid: () => p.targetIncome.trim(),
       fields: (
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -897,7 +901,7 @@ function ResearchEngine({ profile, onBack, restoredResults }) {
         {/* Playbooks tab */}
         {tab === 3 && (
           <div style={{ animation: "fadeUp 0.3s ease" }}>
-            <p style={{ fontSize: 11, color: T.muted, marginBottom: 16 }}>Real platforms named. Pricing anchored to your history. AI noted as accelerator even for non-AI businesses.</p>
+            <p style={{ fontSize: 11, color: T.muted, marginBottom: 16 }}>Actionable launch steps, real acquisition channels, and a scale path for each — how to go from first dollar to repeatable revenue without trading all your hours.</p>
             {playbooks.map((pb, i) => (
               <Section key={i} title={pb.name} badge={`Playbook ${pb.n}`} badgeColor={pb.color} defaultOpen={i === 0} loading={!pb.pitch && !done}>
                 {pb.pitch && <div style={{ background: T.bg, borderLeft: `3px solid ${pb.color}`, padding: "10px 14px", borderRadius: "0 3px 3px 0", marginBottom: 18 }}><Lbl>Positioning Script</Lbl><p style={{ fontSize: 12, color: T.text, lineHeight: 1.75, margin: 0, fontStyle: "italic" }}>"{pb.pitch}"</p></div>}
@@ -1007,7 +1011,7 @@ function ApiKeySetup({ onDone }) {
           One thing before<br /><em style={{ color: T.accent }}>we start.</em>
         </h1>
         <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.8, marginBottom: 32 }}>
-          This tool uses Claude AI to run deep research on your profile. To power it, you need a free Anthropic API key.
+          This tool runs deep AI research on your skills, experience, and circumstances to find a scaleable solo venture you can actually build and get paid for. To power it, you need a free Anthropic API key.
         </p>
 
         <div style={{ marginBottom: 10 }}>
@@ -1189,12 +1193,12 @@ export default function App() {
       {screen === "intake" && (
         <>
           <div style={{ maxWidth: 620, margin: "0 auto", padding: "40px 18px 20px" }}>
-            <div style={{ display: "inline-block", background: T.accentDim, border: `1px solid ${T.accent}40`, borderRadius: 3, padding: "3px 10px", fontSize: 9, letterSpacing: 3, color: T.accent, textTransform: "uppercase", marginBottom: 14, fontFamily: T.mono }}>Personalised Research</div>
+            <div style={{ display: "inline-block", background: T.accentDim, border: `1px solid ${T.accent}40`, borderRadius: 3, padding: "3px 10px", fontSize: 9, letterSpacing: 3, color: T.accent, textTransform: "uppercase", marginBottom: 14, fontFamily: T.mono }}>Solo Venture Discovery</div>
             <h1 style={{ fontFamily: T.serif, fontSize: "clamp(20px,3.5vw,34px)", lineHeight: 1.2, fontWeight: 700, marginBottom: 10 }}>
-              Your profile.<br /><em style={{ color: T.accent }}>Your opportunities.</em>
+              What can you<br /><em style={{ color: T.accent }}>actually build?</em>
             </h1>
-            <p style={{ fontSize: 12, color: T.muted, lineHeight: 1.8, maxWidth: 460, marginBottom: 6 }}>
-              {TOTAL_CALLS} targeted research calls — market signals, sector analysis, 3 tailored opportunities with 7-day validation checklists, full launch playbooks, and a pricing psychology diagnosis. Every industry, not just tech.
+            <p style={{ fontSize: 12, color: T.muted, lineHeight: 1.8, maxWidth: 500, marginBottom: 6 }}>
+              Deep research across all industries to find a scaleable solo venture you can realistically build and get paid for — based on your real skills and experience, not wishful thinking. {TOTAL_CALLS} targeted AI research calls. 3 opportunities with actionable launch playbooks.
             </p>
           </div>
           <IntakeForm onSubmit={p => { setProfile(p); setScreen("research"); setRestored(null); }} />
