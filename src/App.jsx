@@ -1029,7 +1029,8 @@ function ClaudeGuide({ onBack, onSkip }) {
       const res = await fetch(RAW_URL);
       if (!res.ok) throw new Error();
       const code = await res.text();
-      await navigator.clipboard.writeText(code);
+      const prompt = `Please render the following as an interactive React artifact. Launch it immediately — do not explain the code or ask any questions. The app is a solo business research tool that will guide the user through a form.\n\n${code}`;
+      await navigator.clipboard.writeText(prompt);
       setStatus("copied");
     } catch {
       setStatus("error");
