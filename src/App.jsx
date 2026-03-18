@@ -279,6 +279,7 @@ const BLANK = {
   capitalAvailable: "",
   riskTolerance: "medium", timeCommitment: "fulltime",
   targetIncome: "", timelineToRevenue: "6months",
+  venturePref: "open",
   interestedSectors: [], mustAvoid: [], unfairAdvantages: [],
 };
 
@@ -303,7 +304,7 @@ Industries: ${industries || "not specified"} | Skills: ${skills || "not specifie
 Technical level: ${p.technicalLevel} | Energy type: ${p.energyType}
 Capital available: $${p.capitalAvailable || 0} | Risk tolerance: ${p.riskTolerance}
 Time commitment: ${p.timeCommitment} | Target income: $${p.targetIncome || "not specified"}/yr | Timeline: ${p.timelineToRevenue}
-Sectors of interest: ${sectors || "open"} | Must avoid: ${avoid || "nothing"}
+Venture preference: ${p.venturePref || "open"} | Sectors of interest: ${sectors || "open"} | Must avoid: ${avoid || "nothing"}
 Unfair advantages: ${advantages || "not specified"}`;
 }
 
@@ -321,9 +322,9 @@ function buildPhase0(p) {
     { key: "sectors", label: "Identifying high-opportunity sectors", prompt: `${ctx}\n\n5 sectors where a solo with this person's background could build a scaleable, repeatable revenue stream in ${p.location} in 2026. Bias toward sectors with recurring spend, structural tailwinds, or underserved demand. Number 1-5. Format: SECTOR: why now + specific angle for this person.` },
     { key: "timing", label: "Assessing timing", prompt: `${ctx}\n\nBlunt verdict: given runway (${p.monthlyRunway || "unknown"} months), capital ($${p.capitalAvailable || 0}), dependents (${p.dependents}), risk tolerance (${p.riskTolerance}) — should they move now or prepare first? If not now, what specifically needs to change? 3 sentences.` },
     { key: "hidden", label: "Surfacing hidden monetization angles", prompt: `${ctx}\n\n4 monetization angles this person probably hasn't considered — based on their background in ${industries || "their field"}, location ${p.location}, and energy type (${p.energyType}). Each should be something they could feasibly build into a scaleable model. Number 1-4. Format: OPPORTUNITY: why overlooked + why this person is positioned for it.` },
-    { key: "o1_title", label: "Identifying best-fit opportunity", prompt: `${ctx}\n\nThe single best solo venture this person could realistically build and monetize — highest probability of reaching repeatable revenue given their specific background. Must have a path to scale beyond trading hours. Avoid generic consulting unless it can be productized. Consider all industries. Respond with only the venture title in 4-8 words. Nothing else.` },
-    { key: "o2_title", label: "Identifying alternative opportunity", prompt: `${ctx}\n\nA second viable solo venture — genuinely different industry or model from the first. Must be something this person can plausibly build and get paid for. Scaleable or automatable path preferred. Respond with only the venture title in 4-8 words. Nothing else.` },
-    { key: "o3_title", label: "Identifying high-upside opportunity", prompt: `${ctx}\n\nA third, higher-ceiling solo venture — more ambitious, more leverage, more upside if it works. Something with strong scale or automation potential. Must be distinct from the first two. Respond with only the venture title in 4-8 words. Nothing else.` },
+    { key: "o1_title", label: "Identifying best-fit opportunity", prompt: `${ctx}\n\nThe single best solo venture this person could realistically build and monetize — highest probability of reaching repeatable revenue given their specific background. Venture preference: "${p.venturePref || "open"}" — honour this unless there is a strongly better fit (explain if overriding). Must have a credible path to scale. Consider all industries. Respond with only the venture title in 4-8 words. Nothing else.` },
+    { key: "o2_title", label: "Identifying alternative opportunity", prompt: `${ctx}\n\nA second viable solo venture — genuinely different industry or model from the first. Venture preference: "${p.venturePref || "open"}". Must be something this person can plausibly build and get paid for. Respond with only the venture title in 4-8 words. Nothing else.` },
+    { key: "o3_title", label: "Identifying high-upside opportunity", prompt: `${ctx}\n\nA third, higher-ceiling solo venture — more ambitious, more leverage, more upside if it works. Venture preference: "${p.venturePref || "open"}". Must be distinct from the first two. Respond with only the venture title in 4-8 words. Nothing else.` },
   ];
 }
 
@@ -597,6 +598,12 @@ function IntakeForm({ onSubmit }) {
       valid: () => p.targetIncome.trim(),
       fields: (
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          <FS label="How do you want to make money?" hint="This shapes whether we prioritize service models, product models, or a mix" field="venturePref" value={p.venturePref} onChange={set} options={[
+            ["service", "Selling my time & expertise — consulting, coaching, done-for-you"],
+            ["product", "Building a product — digital, SaaS, course, content, or physical"],
+            ["mixed", "Productized service — structured offer, but still expertise-led"],
+            ["open", "No preference — show me what makes the most sense"],
+          ]} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <FI label="Target Annual Income ($)" hint="What does success look like in Year 2–3?" field="targetIncome" value={p.targetIncome} onChange={set} placeholder="e.g. 150000" type="number" />
             <FI label="Capital Available ($)" hint="Budget for tools, marketing, setup" field="capitalAvailable" value={p.capitalAvailable} onChange={set} placeholder="e.g. 10000" type="number" />
